@@ -1,8 +1,18 @@
+// Heuristic evaluation functions for depth-limited search.
 public class Heuristics {
-
+    /**
+     * Functional interface for evaluation.
+     * Returns a score from X's perspective (higher is better for X).
+     */
     public interface EvaluationFunction {
         int evaluate(State s);
     }
+    /**
+     * A domainspecific heristic:
+     * - Large positive for strong X positions.
+     * - Large negative for strong O positions.
+     * - Uses open k-length segments and partial sequences.
+     */
     public static class DefaultHeuristic implements EvaluationFunction {
 
         @Override
@@ -15,7 +25,7 @@ public class Heuristics {
             int scoreO = scoreForPlayer(s, 'O');
             return scoreX - scoreO;
         }
-
+       //Score for a particular player based on potential k-length lines.
         private int scoreForPlayer(State s, char player) {
             char opponent = (player == 'X') ? 'O' : 'X';
             int m = s.m;
@@ -39,6 +49,7 @@ public class Heuristics {
                         int endR = r + (k - 1) * dr;
                         int endC = c + (k - 1) * dc;
 
+                        // ensuring segment stays within boar
                         if (endR < 0 || endR >= m || endC < 0 || endC >= m) continue;
 
                         int countPlayer = 0;
@@ -51,6 +62,7 @@ public class Heuristics {
                             if (ch == player) countPlayer++;
                             else if (ch == opponent) countOpp++;
                         }
+                        // Only care about lines without opponent pieces
                         if (countOpp == 0 && countPlayer > 0) {
                             if (countPlayer == k - 1) {
                                 score += 1000;

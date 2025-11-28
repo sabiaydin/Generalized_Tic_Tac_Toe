@@ -1,7 +1,11 @@
 import java.util.Comparator;
 import java.util.List;
 
+// Minimax and Alpha-Beta search algorithms
 public class Search {
+
+    // Plain Minimax: returns best move for current player.
+    // Mainly used as an oracle on 3x3 for correctness checks.
     public static Move minimax(State s) {
         if (GameEngine.terminal(s)) {
             throw new IllegalArgumentException("minimax called on terminal state");
@@ -31,6 +35,8 @@ public class Search {
         }
         return bestMove;
     }
+
+    // Recursive value for Minimax.
     private static int minimaxValue(State s) {
         Integer u = GameEngine.utility(s);
         if (u != null) {
@@ -56,6 +62,8 @@ public class Search {
         }
     }
 
+    // Minimax with Alpha-Beta pruning, no depth limit.
+    //  For 3x3 this is optimal play.
     public static Move minimaxAB(State s) {
         if (GameEngine.terminal(s)) {
             throw new IllegalArgumentException("minimaxAB called on terminal state");
@@ -86,12 +94,13 @@ public class Search {
                 beta = Math.min(beta, bestValue);
             }
             if (beta <= alpha) {
-                break;
+                break; //prune
             }
         }
         return bestMove;
     }
 
+    //Recursive alpha-beta value without depth limit
     private static int abValue(State s, int alpha, int beta) {
         Integer u = GameEngine.utility(s);
         if (u != null) {
@@ -120,6 +129,9 @@ public class Search {
         }
     }
 
+    //Depth-limited alpha-beta:
+    //depthLimit: max depth from root (root = depthLimit).
+    //evalFn: heuristic used when depth reaches 0 on non-terminal nodes.
     public static Move search(State s, int depthLimit, Heuristics.EvaluationFunction evalFn) {
         if (GameEngine.terminal(s)) {
             throw new IllegalArgumentException("search called on terminal state");
@@ -154,6 +166,7 @@ public class Search {
         }
         return bestMove;
     }
+    //Recursive depth-limited alpha-beta with heuristic evaluation.
     private static int abDLValue(State s, int depth, int alpha, int beta,
                                  Heuristics.EvaluationFunction evalFn) {
         Integer u = GameEngine.utility(s);
@@ -191,12 +204,18 @@ public class Search {
             return value;
         }
     }
+    /* Move ordering helpers */
 
+    // Lexicographic ordering (row, col) for deterministic tie-breaking.
     private static void sortLexicographically(List<Move> moves) {
         moves.sort(Comparator.<Move>comparingInt(mv -> mv.row)
                 .thenComparingInt(mv -> mv.col));
     }
-
+    /**
+     * Move ordering:
+     *  - prefer moves closer to the board center (good pruning).
+     *  - break ties lexicographically for determinism.
+     */
     private static List<Move> orderedMoves(State s) {
         List<Move> moves = GameEngine.actions(s);
         final double center = (s.m - 1) / 2.0;
@@ -205,7 +224,7 @@ public class Search {
                 .comparingDouble((Move mv) -> {
                     double dr = mv.row - center;
                     double dc = mv.col - center;
-                    return dr * dr + dc * dc;
+                    return dr * dr + dc * dc; // squeared distance from center
                 })
                 .thenComparingInt(mv -> mv.row)
                 .thenComparingInt(mv -> mv.col));

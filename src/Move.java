@@ -1,3 +1,4 @@
+// Represents a single move (row, col) on the board
 public class Move {
     public final int row;
     public final int col;

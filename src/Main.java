@@ -1,5 +1,9 @@
 import java.util.Scanner;
-
+/**
+ * Simple console interface to play against the AI.
+ * - Supports arbitrary m x m board and k-in-a-row.
+ * - X is Max, O is Min.
+ */
 public class Main {
         public static void main(String[] args) {
             Scanner sc = new Scanner(System.in);
@@ -17,13 +21,13 @@ public class Main {
 
             int depthLimit;
             if (m == 3 && k == 3) {
-                depthLimit = 9;
+                depthLimit = 9;  // full search
             } else if (m == 4) {
                 depthLimit = 5;
             } else if (m == 5) {
                 depthLimit = 4;
             } else {
-                depthLimit = 4;
+                depthLimit = 4;  //default for larger boards (tune if needed)
             }
 
             while (true) {
@@ -66,8 +70,10 @@ public class Main {
                 } else {
                     Move bestMove;
                     if (m == 3 && k == 3) {
+                        // full alpha-beta for optimal play
                         bestMove = Search.minimaxAB(state);
                     } else {
+                        // depth-limited alpha-beta with heuristic
                         bestMove = Search.search(state, depthLimit, heuristic);
                     }
                     System.out.println("AI plays: " + bestMove);

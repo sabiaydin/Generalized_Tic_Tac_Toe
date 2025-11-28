@@ -1,15 +1,26 @@
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Game rules and basic operations:
+ *  - initial_state
+ *  - player
+ *  - actions
+ *  - result
+ *  - winner
+ *  - terminal
+ *  - utility
+ */
 public class GameEngine {
+    // initial_state(m, k) : new empty state.
     public static State initialState(int m, int k) {
         return new State(m, k);
     }
-
+    // player(state) : 'X' or 'O'.
     public static char player(State s) {
         return s.playerToMove;
     }
 
+    // actions(state) .
     public static List<Move> actions(State s) {
         List<Move> moves = new ArrayList<>();
         for (int r = 0; r < s.m; r++) {
@@ -21,7 +32,7 @@ public class GameEngine {
         }
         return moves;
     }
-
+    //result(state, action) :  new state after action.
     public static State result(State s, Move a) {
         return s.applyMove(a);
     }
@@ -31,6 +42,7 @@ public class GameEngine {
         int k = s.k;
         char[][] b = s.board;
 
+    // DIRECTIONS:
         int[][] dirs = {
                 {0, 1},
                 {1, 0},
@@ -61,7 +73,7 @@ public class GameEngine {
         }
         return null;
     }
-
+    // win/loss/draw TERMINAL STATES
     public static boolean terminal(State s) {
         if (winner(s) != null) return true;
 
@@ -74,7 +86,7 @@ public class GameEngine {
         }
         return true;
     }
-
+   // +1 (X wins), -1 (O wins), 0 (draw), null (non-terminal)
     public static Integer utility(State s) {
         Character w = winner(s);
         if (w == null) {
@@ -83,7 +95,7 @@ public class GameEngine {
         }
         return (w == 'X') ? 1 : -1;
     }
-
+    // printing the board for debugging / console play.
     public static void printBoard(State s) {
         System.out.print("  ");
         for (int c = 0; c < s.m; c++) {
