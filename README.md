@@ -1,74 +1,152 @@
-Generalized Tic-Tac-Toe (m×m, k-in-a-row)
-1)This project implements a fully-functional adversarial search agent that plays generalized Tic-Tac-Toe using:
--Minimax
+1)Introduction: The goal is to design an intelligent agent using:
+-Minimax search
 -Minimax with Alpha–Beta pruning
--Depth-limited Alpha–Beta + heuristic evaluation
+-Depth-limited search with a heuristic evaluator
 -Deterministic move ordering
--The agent is optimal on 3×3 (k=3) and scalable for larger boards such as 4×4 (k=3) and 5×5 (k=4).
-2)Features
--> Complete Game Engine
--State representation
--Legal actions
--Transition model
--Winner detection for arbitrary m, k
--Utility and terminal checks
--> Three Search Algorithms
-a)Plain Minimax – used only for 3×3 verification
-b)Alpha–Beta Pruning – optimal for 3×3
-c)Depth-Limited Alpha–Beta – used for m>3 boards
-Heuristic Evaluator
--> The heuristic evaluates partial k-length lines:
-- +1000 for (k−1)-in-a-row
-- +100 for (k−2)-in-a-row
-- +10 for open lines with ≥1 piece
-- Opponent-containing lines ignored
-Designed from X's perspective (Max).
--> Move Ordering
-Moves ordered by:
-- Distance to center (improves pruning)
-- Lexicographic tie-breaking for determinism
 
+The agent must play optimally on a standard 3×3 (k = 3) board and perform strongly on larger boards like 4×4 (k = 3) and 5×5 (k = 4) under depth constraints.
 
-Overall report:
-1. Design Choises
--Separeted modules
-Clean separation between game rules, search algorithms, state representation, and heuristics.
+2)System Architecture
+The system is divided into six modules, each with a clear responsibility:
+| Module       | Responsibility                                                  |
+| ------------ | --------------------------------------------------------------- |
+| `State`      | Represents the board and active player                          |
+| `Move`       | Encapsulates a move (row, col)                                  |
+| `GameEngine` | Rules: legal moves, winner detection, terminal tests, utilities |
+| `Search`     | Minimax, Alpha–Beta, depth-limited Alpha–Beta                   |
+| `Heuristics` | Evaluation function for non-terminal search states              |
+| `Main`       | Console-based user interface                                    |
 
--Imutable state transitions
-Each move creates a new State object → prevents mutation errors.
+3)Game Engine Design
 
--Deterministic ordering
-Required for reproducibilitu and grading.
+The game engine implements all rules needed for adversarial search:
+3.1 State Representation
+A State object contains:
+-board char[][]
+-size m
+-win condition k
+-current player X or O
+State transitions are immutable:
+Every move generates a new state → avoids mutation bugs.
 
--Move ordering by distanse to center
-Highly improves Alpha–Beta in practise.
+3.2 Legal Move Generation
+actions(state) returns all empty cells.
+This guarantees correctness and ensures Minimax explores all possible actions.
 
-2. Evaluation Function
--The heuristic scores each k-length segment only if it contains no opponent pieces:
+3.3 Transition Model
+result(state, action) → returns a new state with the move applied.
 
---Line Type	Score--
-| Line Type            | Score |
-| -------------------- | ----- |
-| (k−1)-in-a-row       | +1000 |
-| (k−2)-in-a-row       | +100  |
-| any positive partial | +10   |
+3.4 Winner Detection
+The engine scans:
+-all rows
+-all columns
+-main diagonals
+-anti-diagonals
 
+This detection is generalized for any m and k.
+Works for 3×3, 4×4, 5×5, and any board shape.
+
+3.5 Terminal States
+A state is terminal if:
+-X wins
+-O wins
+-the board is full (draw)
+
+3.6 Utility Function
++1 → X wins
+–1 → O wins
+0 → draw
+null → non-terminal
+
+This utility drives Minimax and Alpha–Beta.
+
+4)Search Algorithms
+The AI agent implements three adversarial search algorithms.
+
+4.1 Plain Minimax
+A full Minimax recursion exploring the entire tree:
+-uses utility values
+-returns optimal move
+-lexicographically breaks ties for determinism
+
+This is used as a correctness oracle for 3×3.
+
+4.2 Alpha–Beta Pruning
+Improves Minimax by pruning branches that cannot influence the final decision.
+Key improvements:
+-reduces node exploration drastically
+-produces exactly the same move as Minimax on 3×3
+-uses ordered moves for deeper pruning
+
+4.3 Depth-Limited Alpha–Beta
+
+For larger boards, full Minimax is impossible.
+Therefore, depth-limited Alpha–Beta is used.
+When depth reaches 0:    return heuristic.evaluate(state)
+
+5.Heuristic Evaluation Function
+Designed to evaluate boards from X’s perspective.
+5.1 Scoring Rules
+Only segments of length k that contain no opponent pieces are evaluated:
+| Segment Pattern       | Score |
+| --------------------- | ----- |
+| k − 1 in a row        | +1000 |
+| k − 2 in a row        | +100  |
+| any partial open line | +10   |
 This ensures:
--urgent wins are prioritezed
--urgent blocks are detected
--long-range planning possible
+-urgent wins are prioritized
+-urgent blocks are recognized
+-long-term planning exists
 
-3. Alpha–Beta Pruning Effectiveness
--Without ordering (minimax only)
-Nodes expanded (3×3): 255,168
+The heuristic is symmetric:
+O’s strength is subtracted from X’s to compute net score.
 
--With alpha-beta + ordering
-Nodes expanded (3×3): ≈4,100–6,500
+6.Move Ordering Strategy
+Before Alpha–Beta search, moves are sorted by:
+-Distance to the board center (center moves explored first)
+-Lexicographic order for reproducibility
 
-4. Performance (Depth-Limited)
-| Board   | Depth | Time (ms) | Notes                         |
-| ------- | ----- | --------- | ----------------------------- |
-| 3×3 k=3 | full  | ~1 ms     | Solves entire game tree       |
-| 4×4 k=3 | 5     | 15–40 ms  | Good threat detection         |
-| 5×5 k=4 | 4     | 20–80 ms  | Detects immediate wins/blocks |
+This dramatically increases pruning efficiency.
+
+7.Performance Evaluation
+
+Experiments were performed to compare:
+-Minimax vs Alpha–Beta
+-Alpha–Beta with vs without move ordering
+-Depth-limited performance on larger boards
+
+7.1 Minimax vs Alpha–Beta (3×3)
+| Search Type | Nodes Explored |
+| ----------- | -------------- |
+| Minimax     | ~255,168       |
+| Alpha–Beta  | ~4,100 – 6,500 |
+-> ≈40× improvement
+Both algorithms choose exactly the same moves.
+7.2 Depth-Limited Performance
+| Board      | Depth     | Time (ms) | Notes                 |
+| ---------- | --------- | --------- | --------------------- |
+| 3×3 (full) | unlimited | ~1 ms     | Optimal               |
+| 4×4 (k=3)  | 5         | 15–40 ms  | Good threat detection |
+| 5×5 (k=4)  | 4         | 20–80 ms  | Detects wins & blocks |
+The agent remains fast enough for interactive play.
+
+The project includes a full JUnit test suite covering:
+
+8.Testing and Validation
+
+The project includes a full JUnit test suite covering:
+ Winner detection
+ Legal moves
+ Minimax correctness
+ Alpha–Beta correctness
+ Minimax = Alpha–Beta on 3×3
+ Depth-limited threat blocking
+ Immediate win detection
+All tests pass successfully.
+9.How to Run
+Running with IntelliJ
+Open project
+Mark src as Sources Root
+Open Main.java
+Click Run
 
